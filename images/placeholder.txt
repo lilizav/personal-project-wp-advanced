@@ -1,0 +1,3 @@
+Place your theme images here:
+- world-map.png: Static world map image for the map section
+- Other static assets used throughout the theme
