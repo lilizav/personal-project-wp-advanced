@@ -1,6 +1,9 @@
-<?php get_header(); ?>
-
 <?php
+/*
+Template Name: Travel Bucket List
+*/
+get_header();
+
 $items = travel_bucket_list_get_items();
 $status_counts = array_count_values(wp_list_pluck($items, 'status'));
 $dream_count = $status_counts['dream'] ?? 0;
@@ -9,8 +12,9 @@ $visited_count = $status_counts['visited'] ?? 0;
 
 <div class="container bucket-list-page">
     <section class="bucket-list-intro">
+        <p class="eyebrow">Travel Planning</p>
         <h2>Travel Bucket List</h2>
-        <p>Choose the places you want to visit or have already visited. Use the tabs to switch between <strong>All</strong>, <strong>Dream</strong>, and <strong>Visited</strong>.</p>
+        <p>Choose the places you want to visit or mark the ones you've already seen. Use the sections below to switch between <strong>All</strong>, <strong>Dream</strong>, and <strong>Visited</strong>.</p>
     </section>
 
     <section class="bucket-list-overview">
@@ -46,7 +50,10 @@ $visited_count = $status_counts['visited'] ?? 0;
     <div class="bucket-list-layout">
         <aside class="bucket-list-sidebar">
             <div class="sidebar-panel">
-                <h3>All countries</h3>
+                <div class="sidebar-heading">
+                    <h3>All countries</h3>
+                    <span class="sidebar-count"><?php echo count($items); ?></span>
+                </div>
                 <div class="country-scroll" id="country-scroll">
                     <?php if (!empty($items)) : ?>
                         <?php foreach ($items as $item) : ?>

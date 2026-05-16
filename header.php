@@ -8,9 +8,9 @@
 </head>
 <body <?php body_class(); ?>>
     <header class="header">
-        <div class="container">
+        <div class="container header-inner">
             <div class="logo">
-                <a href="<?php echo home_url(); ?>">✈️ My Travel List</a>
+                <a href="<?php echo home_url(); ?>">✈️ Wander List</a>
             </div>
             <nav class="nav">
                 <?php wp_nav_menu(array('theme_location' => 'primary')); ?>
@@ -20,7 +20,7 @@
 
     <div class="hero">
         <div class="container">
-            <h1 class="site-title">My Travel List</h1>
-            <p class="site-tagline">Explore the world, one destination at a time</p>
+            <h1 class="site-title">Plan your next adventure</h1>
+            <p class="site-tagline">Track visited places, explore dream destinations, and keep your bucket list organized.</p>
         </div>
     </div>
