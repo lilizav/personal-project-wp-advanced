@@ -289,6 +289,78 @@ section {
     line-height: 1.8;
 }
 
+.single-post-container {
+    padding: 40px 0;
+}
+
+.country-detail-post {
+    max-width: 900px;
+    margin: 0 auto;
+    background: #ffffff;
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 18px 42px rgba(16, 32, 60, 0.08);
+}
+
+.detail-header {
+    padding: 40px 40px 20px;
+    background: linear-gradient(135deg, #f0f6ff 0%, #fafbfc 100%);
+    border-bottom: 1px solid rgba(226, 234, 247, 0.95);
+}
+
+.detail-title-area h1 {
+    font-size: 2.8rem;
+    color: #0f172a;
+    margin: 0 0 16px 0;
+    font-weight: 700;
+}
+
+.detail-meta {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.detail-featured-image {
+    width: 100%;
+    overflow: hidden;
+}
+
+.detail-featured-image img {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+.detail-content {
+    padding: 40px;
+    font-size: 1.05rem;
+    line-height: 1.8;
+    color: #334155;
+}
+
+.detail-content p {
+    margin-bottom: 20px;
+}
+
+.detail-back {
+    padding: 20px 40px 40px;
+    border-top: 1px solid rgba(226, 234, 247, 0.95);
+}
+
+.back-link {
+    display: inline-block;
+    color: #1643a1;
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.2s ease;
+}
+
+.back-link:hover {
+    color: #0f2f7f;
+    text-decoration: underline;
+}
+
 .nav ul li {
     margin-left: 20px;
 }
@@ -505,6 +577,76 @@ section {
     margin-bottom: 24px;
 }
 
+.bucket-list-add-form {
+    display: grid;
+    gap: 12px;
+}
+
+.bucket-list-add-form label {
+    font-size: 0.95rem;
+    color: #1f2937;
+}
+
+.bucket-list-add-form input[list],
+.bucket-list-add-form input[type="text"] {
+    width: 100%;
+    border: 1px solid rgba(148,163,184,0.35);
+    border-radius: 16px;
+    padding: 12px 14px;
+    background: #ffffff;
+    color: #0f172a;
+}
+
+.bucket-list-helper {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #475569;
+}
+
+.status-options {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.status-options label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 14px;
+    border: 1px solid rgba(148,163,184,0.35);
+    border-radius: 16px;
+    background: #f8fafc;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.status-options input {
+    accent-color: #1643a1;
+}
+
+.add-country-button {
+    width: 100%;
+    padding: 14px 18px;
+    border: none;
+    border-radius: 999px;
+    background-color: #1643a1;
+    color: #ffffff;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.add-country-button:hover {
+    background-color: #0f2f7f;
+}
+
+.bucket-list-form-message {
+    font-size: 0.95rem;
+    min-height: 1.2rem;
+    color: #334155;
+}
+
 .sidebar-heading {
     display: flex;
     align-items: center;
@@ -560,15 +702,14 @@ section {
     min-height: 780px;
 }
 
-.travel-cards:not(.expanded) .country-card:nth-child(n+5) {
-    display: none;
+.travel-cards {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(280px, 1fr));
+    gap: 24px;
 }
 
 .show-more-wrapper {
-    display: flex;
-    justify-content: center;
-    margin-top: 28px;
-    margin-bottom: 12px;
+    display: none;
 }
 
 .show-more-button {
@@ -596,12 +737,6 @@ section {
     background-color: #4b5563;
 }
 
-.travel-cards {"}}]
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 24px;
-}
-
 .country-card {
     display: flex;
     flex-direction: column;
@@ -613,6 +748,13 @@ section {
     transition: transform 0.28s ease, box-shadow 0.28s ease;
     border: 1px solid rgba(226, 234, 247, 0.95);
 }
+
+@media (max-width: 760px) {
+    .travel-cards {
+        grid-template-columns: 1fr;
+    }
+}
+
 
 .country-card:hover,
 .country-card.highlighted {

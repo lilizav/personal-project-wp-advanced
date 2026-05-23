@@ -17,14 +17,172 @@ function travel_bucket_list_theme_setup() {
     if (!term_exists('dream', 'category')) {
         wp_insert_term('Dream', 'category', array('slug' => 'dream'));
     }
+
+    // Auto-create posts for static countries if they don't exist
+    travel_bucket_list_create_static_country_posts();
 }
+
+function travel_bucket_list_create_static_country_posts() {
+    $static_countries = travel_bucket_list_static_countries();
+
+    foreach ($static_countries as $country) {
+        $existing_place = get_page_by_title($country['title'], OBJECT, 'place');
+        if ($existing_place) {
+            continue;
+        }
+
+        $existing_post = get_page_by_title($country['title'], OBJECT, 'post');
+        $cat_id = travel_bucket_list_get_category_id($country['status']);
+
+        if ($existing_post && $existing_post->ID) {
+            wp_update_post(array(
+                'ID' => $existing_post->ID,
+                'post_type' => 'place',
+            ));
+
+            if ($cat_id) {
+                wp_set_post_categories($existing_post->ID, array($cat_id), false);
+            }
+
+            continue;
+        }
+
+        $post_data = array(
+            'post_title'   => $country['title'],
+            'post_content' => $country['excerpt'],
+            'post_status'  => 'publish',
+            'post_type'    => 'place',
+            'post_category'=> $cat_id ? array($cat_id) : array(),
+        );
+
+        wp_insert_post($post_data);
+    }
+}
+
 add_action('after_setup_theme', 'travel_bucket_list_theme_setup');
+
+add_action('init', function() {
+    if (!get_transient('travel_bucket_list_static_posts_created')) {
+        travel_bucket_list_create_static_country_posts();
+        set_transient('travel_bucket_list_static_posts_created', 1, WEEK_IN_SECONDS);
+    }
+}, 20);
+
+add_action('init', 'travel_bucket_list_register_places_cpt');
+function travel_bucket_list_register_places_cpt() {
+    $labels = array(
+        'name'               => 'Places',
+        'singular_name'      => 'Place',
+        'menu_name'          => 'Places',
+        'name_admin_bar'     => 'Place',
+        'add_new'            => 'Add New',
+        'add_new_item'       => 'Add New Place',
+        'new_item'           => 'New Place',
+        'edit_item'          => 'Edit Place',
+        'view_item'          => 'View Place',
+        'all_items'          => 'All Places',
+        'search_items'       => 'Search Places',
+        'parent_item_colon'  => 'Parent Places:',
+        'not_found'          => 'No places found.',
+        'not_found_in_trash' => 'No places found in Trash.',
+    );
+
+    $args = array(
+        'labels'             => $labels,
+        'public'             => true,
+        'show_ui'            => true,
+        'show_in_menu'       => true,
+        'menu_position'      => 5,
+        'menu_icon'          => 'dashicons-location-alt',
+        'supports'           => array('title', 'editor', 'excerpt', 'thumbnail'),
+        'taxonomies'         => array('category'),
+        'has_archive'        => true,
+        'rewrite'            => array('slug' => 'places'),
+    );
+
+    register_post_type('place', $args);
+}
 
 function travel_bucket_list_enqueue_scripts() {
     wp_enqueue_style('travel-bucket-list-style', get_stylesheet_uri());
     wp_enqueue_script('travel-bucket-list-script', get_template_directory_uri() . '/js/script.js', array('jquery'), '1.0', true);
+    wp_localize_script('travel-bucket-list-script', 'TravelBucketList', array(
+        'ajaxUrl' => admin_url('admin-ajax.php'),
+        'nonce' => wp_create_nonce('travel_bucket_list_add_country'),
+    ));
 }
 add_action('wp_enqueue_scripts', 'travel_bucket_list_enqueue_scripts');
+
+add_action('wp_ajax_travel_bucket_list_add_country', 'travel_bucket_list_add_country');
+add_action('wp_ajax_nopriv_travel_bucket_list_add_country', 'travel_bucket_list_add_country');
+
+function travel_bucket_list_get_category_id($slug) {
+    $term = get_term_by('slug', $slug, 'category');
+    if ($term) {
+        return $term->term_id;
+    }
+
+    $result = wp_insert_term(ucfirst($slug), 'category', array('slug' => $slug));
+    if (is_wp_error($result)) {
+        return 0;
+    }
+
+    return isset($result['term_id']) ? $result['term_id'] : 0;
+}
+
+function travel_bucket_list_add_country() {
+    check_ajax_referer('travel_bucket_list_add_country', 'security');
+
+    $country = trim(sanitize_text_field($_POST['country'] ?? ''));
+    $status = sanitize_text_field($_POST['status'] ?? '');
+
+    if (empty($country) || !in_array($status, array('dream', 'visited'), true)) {
+        wp_send_json_error('Please enter a valid country and select Dream or Visited.');
+    }
+
+    $static_countries = get_bucket_list_countries();
+    foreach ($static_countries as $item) {
+        if (strcasecmp($item['title'], $country) === 0) {
+            wp_send_json_error('That country already exists in the built-in list.');
+        }
+    }
+
+    $cat_id = travel_bucket_list_get_category_id($status);
+    $existing_place = get_page_by_title($country, OBJECT, 'place');
+    if ($existing_place && $existing_place->ID) {
+        if ($cat_id) {
+            wp_set_post_categories($existing_place->ID, array($cat_id), false);
+        }
+        wp_send_json_success('Place already exists. Status updated.');
+    }
+
+    $existing_post = get_page_by_title($country, OBJECT, 'post');
+    if ($existing_post && $existing_post->ID) {
+        wp_update_post(array(
+            'ID' => $existing_post->ID,
+            'post_type' => 'place',
+        ));
+        if ($cat_id) {
+            wp_set_post_categories($existing_post->ID, array($cat_id), false);
+        }
+        wp_send_json_success('Existing country converted to a Place and status updated.');
+    }
+
+    $post_data = array(
+        'post_title'   => $country,
+        'post_content' => '',
+        'post_status'  => 'publish',
+        'post_type'    => 'place',
+        'post_category'=> $cat_id ? array($cat_id) : array(),
+    );
+
+    $post_id = wp_insert_post($post_data);
+    if (is_wp_error($post_id) || !$post_id) {
+        wp_send_json_error('Unable to add the selected country.');
+    }
+
+    wp_send_json_success('Country added to your bucket list.');
+}
 
 // Custom function to get travel status
 function get_travel_status($post_id) {
@@ -64,6 +222,19 @@ function get_bucket_list_countries() {
         array('slug' => 'argentina', 'title' => 'Argentina', 'status' => 'dream', 'excerpt' => 'Taste steak, tango through Buenos Aires, and explore Patagonia wilderness.'),
         array('slug' => 'india', 'title' => 'India', 'status' => 'dream', 'excerpt' => 'Experience colorful festivals, rich history, and unforgettable cuisine.'),
         array('slug' => 'vietnam', 'title' => 'Vietnam', 'status' => 'dream', 'excerpt' => 'Journey through lantern-filled streets, rice terraces, and coast-to-coast flavors.'),
+        array('slug' => 'united-kingdom', 'title' => 'United Kingdom', 'status' => 'dream', 'excerpt' => 'Explore London, the countryside, coastal cliffs, and historic castles.'),
+        array('slug' => 'china', 'title' => 'China', 'status' => 'dream', 'excerpt' => 'See ancient heritage, bustling cities, and iconic landscapes like the Great Wall.'),
+        array('slug' => 'south-korea', 'title' => 'South Korea', 'status' => 'dream', 'excerpt' => 'Discover modern cities, temples, mountain scenery, and rich cuisine.'),
+        array('slug' => 'mexico', 'title' => 'Mexico', 'status' => 'dream', 'excerpt' => 'Enjoy colorful culture, coastal resorts, and ancient archaeological sites.'),
+        array('slug' => 'indonesia', 'title' => 'Indonesia', 'status' => 'dream', 'excerpt' => 'Island-hop across beaches, volcanoes, rice terraces, and tropical forests.'),
+        array('slug' => 'philippines', 'title' => 'Philippines', 'status' => 'dream', 'excerpt' => 'Relax on white-sand beaches, explore islands, and enjoy warm island life.'),
+        array('slug' => 'malaysia', 'title' => 'Malaysia', 'status' => 'dream', 'excerpt' => 'Combine jungle adventure, modern cities, and vibrant food scenes.'),
+        array('slug' => 'uae', 'title' => 'United Arab Emirates', 'status' => 'dream', 'excerpt' => 'Experience futuristic cities, desert adventures, and luxury coastlines.'),
+        array('slug' => 'chile', 'title' => 'Chile', 'status' => 'dream', 'excerpt' => 'Travel from desert landscapes to glaciers and vibrant urban culture.'),
+        array('slug' => 'russia', 'title' => 'Russia', 'status' => 'dream', 'excerpt' => 'Explore historic cities, dramatic landscapes, and cultural heritage.'),
+        array('slug' => 'poland', 'title' => 'Poland', 'status' => 'dream', 'excerpt' => 'Discover charming cities, castles, and scenic lakes in Central Europe.'),
+        array('slug' => 'czech-republic', 'title' => 'Czech Republic', 'status' => 'dream', 'excerpt' => 'Wander Prague’s old town, medieval castles, and peaceful countryside.'),
+        array('slug' => 'croatia', 'title' => 'Croatia', 'status' => 'dream', 'excerpt' => 'Enjoy Adriatic coastlines, historic towns, and national park islands.'),
     );
 }
 
@@ -323,9 +494,9 @@ function travel_bucket_list_static_countries() {
 }
 
 function travel_bucket_list_get_items() {
-    $items = travel_bucket_list_static_countries();
+    $items = array();
     $query = new WP_Query(array(
-        'post_type' => 'post',
+        'post_type' => array('post', 'place'),
         'posts_per_page' => -1,
         'orderby' => 'title',
         'order' => 'ASC',

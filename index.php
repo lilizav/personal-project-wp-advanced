@@ -67,6 +67,26 @@ $visited_count = $status_counts['visited'] ?? 0;
                 <button class="filter-button" data-status="dream">Dream list</button>
                 <button class="filter-button" data-status="visited">Visited now</button>
             </div>
+
+            <div class="sidebar-panel sidebar-add-country">
+                <h3>Add a country</h3>
+                <form id="bucket-list-add-form" class="bucket-list-add-form">
+                    <label for="bucket-country-input">Country</label>
+                    <input list="bucket-country-list" id="bucket-country-input" name="country" placeholder="Type a country name" autocomplete="off">
+                    <datalist id="bucket-country-list">
+                        <?php foreach (get_bucket_list_countries() as $country) : ?>
+                            <option value="<?php echo esc_attr($country['title']); ?>"></option>
+                        <?php endforeach; ?>
+                    </datalist>
+                    <p class="bucket-list-helper">Select a country, then choose Dream or Visited.</p>
+                    <div class="status-options">
+                        <label><input type="radio" name="status" value="dream" checked> Dream</label>
+                        <label><input type="radio" name="status" value="visited"> Visited</label>
+                    </div>
+                    <button type="submit" class="add-country-button">Add to bucket list</button>
+                    <p class="bucket-list-form-message" id="bucket-form-message"></p>
+                </form>
+            </div>
         </aside>
 
         <main class="bucket-list-content">
@@ -98,7 +118,7 @@ $visited_count = $status_counts['visited'] ?? 0;
                 <?php endif; ?>
             </div>
             <div class="show-more-wrapper">
-                <button class="show-more-button" id="show-more-btn">Show More Countries</button>
+                <button class="show-more-button" id="show-more-btn">Show More Countries ↓</button>
             </div>
             <div class="no-results-message hide">
                 <p>No destinations match this filter yet. Try another tab or add more destinations.</p>

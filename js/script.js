@@ -7,6 +7,14 @@ jQuery(document).ready(function($) {
         return 'all';
     }
 
+    function updateMoreButton() {
+        $('#show-more-btn').hide();
+    }
+
+    function resetMoreButton() {
+        $('#show-more-btn').hide();
+    }
+
     function applyStatusFilter(status) {
         var cards = $('.country-card');
         var listItems = $('.country-link');
@@ -31,12 +39,48 @@ jQuery(document).ready(function($) {
         } else {
             $('.no-results-message').addClass('hide');
         }
+
+        resetMoreButton();
+        updateMoreButton();
     }
 
     $('.bucket-tab, .filter-button').on('click', function() {
         var status = $(this).data('status');
         window.location.hash = status;
         applyStatusFilter(status);
+    });
+
+    $('#bucket-list-add-form').on('submit', function(event) {
+        event.preventDefault();
+
+        var country = $('#bucket-country-input').val().trim();
+        var status = $('input[name="status"]:checked').val();
+        var message = $('#bucket-form-message');
+
+        if (!country) {
+            message.text('Please type a country name.');
+            return;
+        }
+
+        message.text('Saving...');
+
+        $.post(TravelBucketList.ajaxUrl, {
+            action: 'travel_bucket_list_add_country',
+            security: TravelBucketList.nonce,
+            country: country,
+            status: status
+        }).done(function(response) {
+            if (response.success) {
+                message.text(response.data || 'Country added. Reloading...');
+                setTimeout(function() {
+                    window.location.reload();
+                }, 900);
+            } else {
+                message.text(response.data || 'Unable to add country.');
+            }
+        }).fail(function() {
+            message.text('There was a problem submitting the country.');
+        });
     });
 
     $('.country-link').on('click', function(event) {
@@ -77,17 +121,6 @@ jQuery(document).ready(function($) {
         applyStatusFilter(getCurrentStatusFromHash());
     });
 
-    // Show More button functionality
-    $('#show-more-btn').on('click', function() {
-        var travelCards = $('.travel-cards');
-        var isExpanded = travelCards.hasClass('expanded');
-        
-        if (isExpanded) {
-            travelCards.removeClass('expanded');
-            $(this).text('Show More Countries');
-        } else {
-            travelCards.addClass('expanded');
-            $(this).text('Show Less Countries');
-        }
-    });
+    // Show More button functionality is disabled because all countries are shown by default.
+    $('#show-more-btn').hide();
 });
